@@ -60,6 +60,8 @@
             int LightSteps;
             float LightAbsorbtion;
 
+            float4 PhaseParams;
+
             float sampleDensity (float3 pos)
             {
                 float factor = saturate(exp(pos.y - MinHeight));
@@ -106,9 +108,9 @@
             
             float phase (float a)
             {
-                float blend = .5;
-                float hgBlend = hg(a, 0.85) * (1 - blend) + hg(a, -0.3) * blend;
-                return 0.8 + hgBlend * 0.15;
+                float blend = 0.5;
+                float hgBlend = hg(a, PhaseParams.x) * (1 - blend) + hg(a, -PhaseParams.y) * blend;
+                return PhaseParams.z + hgBlend * PhaseParams.w;
             }
             
             float4 frag (v2f i) : SV_Target
