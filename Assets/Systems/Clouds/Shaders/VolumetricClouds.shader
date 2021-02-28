@@ -1,4 +1,4 @@
-﻿Shader "Hidden/CalculateFogDensity"
+﻿Shader "Hidden/VolumetricClouds"
 {
     Properties
     {
@@ -16,7 +16,7 @@
             
             #include "UnityCG.cginc"
             #include "UnityLightingCommon.cginc"
-            #include "Snoise.cginc"
+            #include "Assets/Shaders/Snoise.cginc"
 
             struct appdata
             {
@@ -47,13 +47,14 @@
             sampler2D _MainTex;
             sampler2D _CameraDepthTexture;
 
+            sampler2D NoiseTex;
+            
             float NoiseScale;
             float MinHeight;
             float MaxHeight;
             
             int Steps;
             float Distance;
-
             float ExtinctionFactor;
             float ScatteringFactor;
 
@@ -61,6 +62,8 @@
             float LightAbsorbtion;
 
             float4 PhaseParams;
+
+            int DrawOnScreen;
 
             float sampleDensity (float3 pos)
             {
@@ -112,10 +115,23 @@
                 float hgBlend = hg(a, PhaseParams.x) * (1 - blend) + hg(a, -PhaseParams.y) * blend;
                 return PhaseParams.z + hgBlend * PhaseParams.w;
             }
+
+            float4 drawOnScreen(float2 uv)
+            {
+                float4 noiseCol = tex2D(NoiseTex, uv);
+                
+                return noiseCol;
+            }
             
             float4 frag (v2f i) : SV_Target
             {
                 float4 col = tex2D(_MainTex, i.uv);
+                
+                if (DrawOnScreen == 1)
+                {
+                    // TODO
+                    //col = drawOnScreen(i.uv);
+                }
                 
                 float3 rayOrigin = _WorldSpaceCameraPos;
                 

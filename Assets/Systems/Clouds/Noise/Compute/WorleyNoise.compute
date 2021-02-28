@@ -1,0 +1,26 @@
+#pragma kernel CSMain
+
+StructuredBuffer<float3> Points;
+
+int PointCount;
+int Size;
+
+RWTexture3D<float4> Result;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float closest = 1000000;
+    
+    for (int i = 0; i < PointCount; i++)
+    {
+        float dst = distance(id.xyz, Points[i]);
+        
+        if (dst < closest)
+        {
+            closest = dst;
+        }
+    }
+    
+    Result[id.xyz] = 1 - saturate(closest / Size);
+}
