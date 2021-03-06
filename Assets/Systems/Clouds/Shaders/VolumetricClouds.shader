@@ -50,6 +50,8 @@
             sampler2D NoiseTex;
             
             float NoiseScale;
+            float Density;
+            float Coverage;
             float MinHeight;
             float MaxHeight;
             
@@ -74,7 +76,7 @@
                     factor = saturate(exp(-pos.y + MaxHeight));
                 }
                 
-                return saturate(snoise(pos / NoiseScale)) * factor;
+                return min(saturate(snoise(pos / NoiseScale )), Coverage) * factor * Density;
             }
 
             float3 computeSunColor (float3 pos)

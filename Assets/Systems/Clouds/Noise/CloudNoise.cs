@@ -7,14 +7,18 @@ using Debug = UnityEngine.Debug;
 namespace VolumetricRendering.Clouds.Noise
 {
     [ExecuteInEditMode]
-    public class CloudNoise : MonoBehaviour, INoise
+    public class CloudNoise : MonoBehaviour, ICloudNoise
     {
-        public RenderTexture NoiseTexture => _noiseTexture;
-        
+        public RenderTexture ShapeNoiseTexture => _noiseTexture;
+        public RenderTexture DetailNoiseTexture { get; }
+
         [Header("Settings")] 
         [Range(0, 2048)]
         [SerializeField] private int _size;
-        [SerializeField] private WorleyNoiseSettings _worleySettings;
+
+        [Header("Worley settings")] 
+        [SerializeField] private ComputeShader _worleyCompute;
+        [SerializeField] private int _pointCount;
 
         private RenderTexture _noiseTexture;
 
@@ -38,18 +42,18 @@ namespace VolumetricRendering.Clouds.Noise
 
         private RenderTexture EvaluateWorleyNoise()
         {
-            ComputeShader computeShader = _worleySettings.ComputeShader;
+            ComputeShader computeShader = _worleyCompute;
             int kernelIndex = computeShader.FindKernel("CSMain");
             
             // Sending buffers
-            Vector3[] points = GetRandomPoints(_worleySettings.PointCount, _size);
+            Vector3[] points = GetRandomPoints(_pointCount, _size);
             
             ComputeBuffer pointsBuffer = new ComputeBuffer(points.Length, sizeof(float) * 3);
             pointsBuffer.SetData(points);
             computeShader.SetBuffer(kernelIndex, "Points", pointsBuffer);
             
             // Sending settings
-            computeShader.SetInt("PointCount", _worleySettings.PointCount);
+            computeShader.SetInt("PointCount", _pointCount);
             computeShader.SetInt("Size", _size);
             
             // Creating the result texture

@@ -14,7 +14,7 @@ namespace VolumetricRendering.Clouds.Noise.Editor
             
             if (GUILayout.Button("Update Noise"))
             {
-                if (target is INoise cloudNoise)
+                if (target is ICloudNoise cloudNoise)
                 {
                     cloudNoise.UpdateNoise();
                 }

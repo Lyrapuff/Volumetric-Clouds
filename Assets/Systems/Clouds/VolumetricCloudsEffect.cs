@@ -4,14 +4,18 @@ using VolumetricRendering.Clouds.Noise;
 namespace VolumetricRendering.Clouds
 {
     [ExecuteInEditMode]
-    public class VolumetricCloudsEffect : MonoBehaviour
+    [RequireComponent(typeof(ICloudNoise))]
+    public partial class VolumetricCloudsEffect : MonoBehaviour
     {
         [Header("References")]
         [SerializeField] private Shader _shader;
-        [SerializeField] private CloudNoise _noise;
 
         [Header("Settings")]
         [SerializeField] private float _noiseScale;
+        [Range(0f, 1f)]
+        [SerializeField] private float _density;
+        [Range(0f, 1f)]
+        [SerializeField] private float _coverage;
         [Header("Altitude settings")]
         [SerializeField] private float _minHeight;
         [SerializeField] private float _maxHeight;
@@ -36,53 +40,43 @@ namespace VolumetricRendering.Clouds
         [Header("Debug")] 
         [SerializeField] private bool _drawOnScreen;
 
-        private Material _material;
+        private ICloudNoise _cloudNoise;
         
-        private static readonly int NoiseTex = Shader.PropertyToID("NoiseTex");
-        private static readonly int NoiseScale = Shader.PropertyToID("NoiseScale");
-        private static readonly int MinHeight = Shader.PropertyToID("MinHeight");
-        private static readonly int MaxHeight = Shader.PropertyToID("MaxHeight");
-        private static readonly int Steps = Shader.PropertyToID("Steps");
-        private static readonly int Distance = Shader.PropertyToID("Distance");
-        private static readonly int ExtinctionFactor = Shader.PropertyToID("ExtinctionFactor");
-        private static readonly int ScatteringFactor = Shader.PropertyToID("ScatteringFactor");
-        private static readonly int LightSteps = Shader.PropertyToID("LightSteps");
-        private static readonly int LightAbsorbtion = Shader.PropertyToID("LightAbsorbtion");
-        private static readonly int PhaseParams = Shader.PropertyToID("PhaseParams");
-        private static readonly int DrawOnScreen = Shader.PropertyToID("DrawOnScreen");
+        private Material _material;
 
         private void OnRenderImage(RenderTexture src, RenderTexture dest)
         {
-            if (_material == null)
+            _cloudNoise ??= GetComponent<ICloudNoise>();
+            
+            if (_cloudNoise.ShapeNoiseTexture == null)
             {
-                _material = new Material(_shader);
-            }
-
-            if (_noise.NoiseTexture == null)
-            {
-                _noise.UpdateNoise();
+                _cloudNoise.UpdateNoise();
             }
             
-            SendSettings();
+            _material ??= new Material(_shader);
+            
+            SendSettings(_material);
 
             Graphics.Blit(src, dest, _material);
         }
 
-        private void SendSettings()
+        private void SendSettings(Material material)
         {
-            _material.SetTexture(NoiseTex, _noise.NoiseTexture);
-            _material.SetFloat(NoiseScale, _noiseScale);
-            _material.SetFloat(MinHeight, _minHeight);
-            _material.SetFloat(MaxHeight, _maxHeight);
-            _material.SetInt(Steps, _steps);
-            _material.SetFloat(Distance, _distance);
-            _material.SetFloat(ExtinctionFactor, _extinctionFactor);
-            _material.SetFloat(ScatteringFactor, _scatteringFactor);
-            _material.SetInt(LightSteps, _lightSteps);
-            _material.SetFloat(LightAbsorbtion, _lightAbsorbtion);
-            _material.SetVector(PhaseParams, new Vector4(_forwardScattering, _backScattering, _baseBrightness, _phaseFactor));
+            material.SetTexture(NoiseTex, _cloudNoise.ShapeNoiseTexture);
+            material.SetFloat(NoiseScale, _noiseScale);
+            material.SetFloat(Density, _density);
+            material.SetFloat(Coverage, _coverage);
+            material.SetFloat(MinHeight, _minHeight);
+            material.SetFloat(MaxHeight, _maxHeight);
+            material.SetInt(Steps, _steps);
+            material.SetFloat(Distance, _distance);
+            material.SetFloat(ExtinctionFactor, _extinctionFactor);
+            material.SetFloat(ScatteringFactor, _scatteringFactor);
+            material.SetInt(LightSteps, _lightSteps);
+            material.SetFloat(LightAbsorbtion, _lightAbsorbtion);
+            material.SetVector(PhaseParams, new Vector4(_forwardScattering, _backScattering, _baseBrightness, _phaseFactor));
 
-            _material.SetInt(DrawOnScreen, _drawOnScreen ? 1 : 0);
+            material.SetInt(DrawOnScreen, _drawOnScreen ? 1 : 0);
         }
     }
 }
