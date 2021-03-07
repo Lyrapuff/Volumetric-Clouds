@@ -379,8 +379,8 @@ MonoBehaviour:
   _noiseScale: 15
   _density: 1
   _coverage: 1
-  _minHeight: 5
-  _maxHeight: 25
+  _nearRadius: 250
+  _farRadius: 280
   _steps: 15
   _distance: 50
   _extinctionFactor: 0.34
@@ -391,7 +391,6 @@ MonoBehaviour:
   _backScattering: 0.3
   _baseBrightness: 0.8
   _phaseFactor: 0.265
-  _drawOnScreen: 0
 --- !u!81 &1892633863
 AudioListener:
   m_ObjectHideFlags: 0

@@ -4,7 +4,7 @@ namespace Systems.Extensions
 {
     public static class MaterialExtensions
     {
-        public static void EnableKeyword(this Material material, string keyword, bool enabled)
+        public static void SetKeyword(this Material material, string keyword, bool enabled)
         {
             if (enabled)
             {

@@ -1,3 +1,5 @@
+using System;
+using Systems.Extensions;
 using UnityEngine;
 using VolumetricRendering.Clouds.Noise;
 
@@ -16,9 +18,11 @@ namespace VolumetricRendering.Clouds
         [SerializeField] private float _density;
         [Range(0f, 1f)]
         [SerializeField] private float _coverage;
-        [Header("Altitude settings")]
-        [SerializeField] private float _minHeight;
-        [SerializeField] private float _maxHeight;
+        [Header("Volume settings")]
+        [Range(0f, 1000f)]
+        [SerializeField] private float _nearRadius;
+        [Range(0f, 1000f)]
+        [SerializeField] private float _farRadius;
         [Header("Raymarch settings")]
         [SerializeField] private int _steps;
         [SerializeField] private float _distance;
@@ -37,12 +41,17 @@ namespace VolumetricRendering.Clouds
         [Range (0, 1)]
         [SerializeField] private float _phaseFactor = .15f;
 
-        [Header("Debug")] 
-        [SerializeField] private bool _drawOnScreen;
-
         private ICloudNoise _cloudNoise;
         
         private Material _material;
+
+        private void OnValidate()
+        {
+            if (_farRadius < _nearRadius)
+            {
+                _farRadius = _nearRadius;
+            }
+        }
 
         private void OnRenderImage(RenderTexture src, RenderTexture dest)
         {
@@ -62,21 +71,21 @@ namespace VolumetricRendering.Clouds
 
         private void SendSettings(Material material)
         {
-            material.SetTexture(NoiseTex, _cloudNoise.ShapeNoiseTexture);
+            material.SetTexture(ShapeNoiseTex, _cloudNoise.ShapeNoiseTexture);
             material.SetFloat(NoiseScale, _noiseScale);
             material.SetFloat(Density, _density);
             material.SetFloat(Coverage, _coverage);
-            material.SetFloat(MinHeight, _minHeight);
-            material.SetFloat(MaxHeight, _maxHeight);
+            material.SetVector(VolumeSettings, new Vector2(_nearRadius, _farRadius));
+            
             material.SetInt(Steps, _steps);
             material.SetFloat(Distance, _distance);
             material.SetFloat(ExtinctionFactor, _extinctionFactor);
             material.SetFloat(ScatteringFactor, _scatteringFactor);
+            
             material.SetInt(LightSteps, _lightSteps);
             material.SetFloat(LightAbsorbtion, _lightAbsorbtion);
+            
             material.SetVector(PhaseParams, new Vector4(_forwardScattering, _backScattering, _baseBrightness, _phaseFactor));
-
-            material.SetInt(DrawOnScreen, _drawOnScreen ? 1 : 0);
         }
     }
 }

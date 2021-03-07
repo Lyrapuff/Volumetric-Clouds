@@ -16,7 +16,7 @@
             
             #include "UnityCG.cginc"
             #include "UnityLightingCommon.cginc"
-            #include "Assets/Shaders/Snoise.cginc"
+            #include "Assets/Lib/Shaders/Snoise.cginc"
 
             struct appdata
             {
@@ -47,13 +47,18 @@
             sampler2D _MainTex;
             sampler2D _CameraDepthTexture;
 
-            sampler2D NoiseTex;
+            Texture3D<float4> ShapeNoiseTex;
+            SamplerState samplerShapeNoiseTex;
+            Texture3D<float4> DetailNoiseTex;
+            SamplerState samplerDetailNoiseTex;
             
             float NoiseScale;
             float Density;
             float Coverage;
-            float MinHeight;
-            float MaxHeight;
+
+            // x is the nearRadius
+            // y is the farRadius
+            float2 VolumeSettings;
             
             int Steps;
             float Distance;
@@ -65,113 +70,39 @@
 
             float4 PhaseParams;
 
-            int DrawOnScreen;
+            struct HitInfo
+            {
+                float dstToVolume;
+                float dstInside;
+            };
 
+            HitInfo tryHitVolume(float3 rayOrigin, float3 rayDir)
+            {
+                HitInfo hitInfo;
+                
+                hitInfo.dstToVolume = distance(rayOrigin, float3(0,0,0));
+                hitInfo.dstInside = 1;
+                
+                return hitInfo;
+            }
+            
             float sampleDensity (float3 pos)
             {
-                float factor = saturate(exp(pos.y - MinHeight));
-
-                if (pos.y > MaxHeight)
-                {
-                    factor = saturate(exp(-pos.y + MaxHeight));
-                }
+                float3 samplePos = pos;
                 
-                return min(saturate(snoise(pos / NoiseScale )), Coverage) * factor * Density;
-            }
-
-            float3 computeSunColor (float3 pos)
-            {
-                float3 rayOrigin = _WorldSpaceLightPos0;
-                float3 dir = pos - rayOrigin;
-                float dst = length(dir);
-                float3 rayDir = normalize(dir);
-
-                float stepSize = dst / LightSteps;
-                float dstTraveled = 0;
-
-                float totalDensity = 0;
+                //float density = ShapeNoiseTex.SampleLevel(samplerShapeNoiseTex, samplePos, 0);
                 
-                while (dstTraveled < dst)
-                {
-                    float3 marchPos = rayOrigin + rayDir * dstTraveled;
-                    
-                    float densityAtPoint = sampleDensity(marchPos);
-                    totalDensity += densityAtPoint * stepSize; 
-                    
-                    dstTraveled += stepSize;
-                }
-
-                return exp(-totalDensity * LightAbsorbtion) * _LightColor0;
+                return 0;
             }
 
-            // Henyey-Greenstein
-            float hg (float a, float g)
-            {
-                float g2 = g * g;
-                return (1 - g2) / (4 * UNITY_PI * pow(1 + g2 - 2 * g * a, 1.53));
-            }
-            
-            float phase (float a)
-            {
-                float blend = 0.5;
-                float hgBlend = hg(a, PhaseParams.x) * (1 - blend) + hg(a, -PhaseParams.y) * blend;
-                return PhaseParams.z + hgBlend * PhaseParams.w;
-            }
-
-            float4 drawOnScreen(float2 uv)
-            {
-                float4 noiseCol = tex2D(NoiseTex, uv);
-                
-                return noiseCol;
-            }
-            
             float4 frag (v2f i) : SV_Target
             {
                 float4 col = tex2D(_MainTex, i.uv);
-                
-                if (DrawOnScreen == 1)
-                {
-                    // TODO
-                    //col = drawOnScreen(i.uv);
-                }
-                
+
                 float3 rayOrigin = _WorldSpaceCameraPos;
-                
                 float3 rayDir = normalize(i.viewVector);
-
-                float viewLength = length(i.viewVector);
-
-                float depth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, i.uv);
-                float linearDepth = LinearEyeDepth(depth) * viewLength;
-
-                const float stepSize = Distance / Steps;
-                float dstTraveled = 0;
-
-                float cosAngle = dot(rayDir, _WorldSpaceLightPos0.xyz);
-                float phaseVal = phase(cosAngle);
                 
-                float extinction = 1;
-                float3 scattering = 0;
-                
-                while (dstTraveled < min(linearDepth, Distance))
-                {
-                    float3 pos = rayOrigin + rayDir * dstTraveled;
-                    
-                    float densityAtPoint = sampleDensity(pos);
-                    float extinctionCoef = ExtinctionFactor * densityAtPoint;
-                    float scatteringCoef = ScatteringFactor * densityAtPoint;
-
-                    extinction *= exp(-extinctionCoef * stepSize);
-
-                    float3 sunColor = computeSunColor(pos);
-                    float3 stepScattering = scatteringCoef * stepSize * (phaseVal * sunColor);
-
-                    scattering += extinction * stepScattering;
-                    
-                    dstTraveled += stepSize;
-                }
-                
-                return col * extinction + float4(scattering, 0);
+                return col;
             }
             ENDCG
         }
