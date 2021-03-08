@@ -1,26 +1,30 @@
 #pragma kernel CSMain
 
+#include "Assets/Lib/Shaders/NoiseLib.cginc"
+
 StructuredBuffer<float3> Points;
 
-int PointCount;
 int Size;
+int Rep;
+int Octaves;
+float AmplitudeMul;
 
 RWTexture3D<float4> Result;
 
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    float closest = 1000000;
-    
-    for (int i = 0; i < PointCount; i++)
+    float3 pos = float3(id.x, id.y, id.z) / (float)Size;
+    int rep = Rep;
+    float amplitude = 0.5;
+    float value = 0;
+
+    for (int i = 0; i < Octaves; i++)
     {
-        float dst = distance(id.xyz, Points[i]);
-        
-        if (dst < closest)
-        {
-            closest = dst;
-        }
+        value += amplitude * (1 - worley(pos, 1, false, rep).x);
+        rep	*= 2;
+        amplitude *= AmplitudeMul;
     }
     
-    Result[id.xyz] = 1 - saturate(closest / Size);
+    Result[id.xyz] = value;
 }

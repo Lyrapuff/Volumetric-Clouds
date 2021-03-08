@@ -18,19 +18,19 @@ namespace VolumetricRendering.Clouds
         [SerializeField] private float _density;
         [Range(0f, 1f)]
         [SerializeField] private float _coverage;
-        [Header("Volume settings")]
-        [Range(0f, 1000f)]
-        [SerializeField] private float _nearRadius;
-        [Range(0f, 1000f)]
-        [SerializeField] private float _farRadius;
+        
+        [Header("Volume settings")] 
+        [SerializeField] private Transform _volume;
+        
         [Header("Raymarch settings")]
         [SerializeField] private int _steps;
-        [SerializeField] private float _distance;
         [SerializeField] private float _extinctionFactor;
         [SerializeField] private float _scatteringFactor;
+        
         [Header("Lightmarch settings")]
         [SerializeField] private int _lightSteps;
         [SerializeField] private float _lightAbsorbtion;
+        
         [Header("Phase settings")]
         [Range (0, 1)]
         [SerializeField] private float _forwardScattering = .83f;
@@ -41,17 +41,14 @@ namespace VolumetricRendering.Clouds
         [Range (0, 1)]
         [SerializeField] private float _phaseFactor = .15f;
 
+        [Header("Debug")]
+        [SerializeField] private bool _drawOnScreen;
+        [Range(0f, 1f)]
+        [SerializeField] private float _slice;
+
         private ICloudNoise _cloudNoise;
         
         private Material _material;
-
-        private void OnValidate()
-        {
-            if (_farRadius < _nearRadius)
-            {
-                _farRadius = _nearRadius;
-            }
-        }
 
         private void OnRenderImage(RenderTexture src, RenderTexture dest)
         {
@@ -75,10 +72,12 @@ namespace VolumetricRendering.Clouds
             material.SetFloat(NoiseScale, _noiseScale);
             material.SetFloat(Density, _density);
             material.SetFloat(Coverage, _coverage);
-            material.SetVector(VolumeSettings, new Vector2(_nearRadius, _farRadius));
+
+            Vector3 halfScale = _volume.localScale * 0.5f;
+            material.SetVector(BoundsMin, _volume.position - halfScale);
+            material.SetVector(BoundsMax, _volume.position + halfScale);
             
             material.SetInt(Steps, _steps);
-            material.SetFloat(Distance, _distance);
             material.SetFloat(ExtinctionFactor, _extinctionFactor);
             material.SetFloat(ScatteringFactor, _scatteringFactor);
             
@@ -86,6 +85,9 @@ namespace VolumetricRendering.Clouds
             material.SetFloat(LightAbsorbtion, _lightAbsorbtion);
             
             material.SetVector(PhaseParams, new Vector4(_forwardScattering, _backScattering, _baseBrightness, _phaseFactor));
+            
+            material.SetKeyword("DRAW_ON_SCREEN", _drawOnScreen);
+            material.SetFloat("Slice", _slice);
         }
     }
 }

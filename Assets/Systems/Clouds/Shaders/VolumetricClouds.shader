@@ -13,10 +13,10 @@
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma shader_feature DRAW_ON_SCREEN
             
             #include "UnityCG.cginc"
             #include "UnityLightingCommon.cginc"
-            #include "Assets/Lib/Shaders/Snoise.cginc"
 
             struct appdata
             {
@@ -38,8 +38,8 @@
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = v.uv;
 
-                float3 viewVector = mul(unity_CameraInvProjection, float4(v.uv * 2 - 1, 0, -1));
-                o.viewVector = mul(unity_CameraToWorld, float4(viewVector, 0));
+                float3 viewVector = mul(unity_CameraInvProjection, float4(v.uv * 2.0 - 1.0, 0.0, -1.0));
+                o.viewVector = mul(unity_CameraToWorld, float4(viewVector, 0.0));
                 
                 return o;
             }
@@ -56,12 +56,10 @@
             float Density;
             float Coverage;
 
-            // x is the nearRadius
-            // y is the farRadius
-            float2 VolumeSettings;
+            float3 BoundsMin;
+            float3 BoundsMax;
             
             int Steps;
-            float Distance;
             float ExtinctionFactor;
             float ScatteringFactor;
 
@@ -70,39 +68,90 @@
 
             float4 PhaseParams;
 
-            struct HitInfo
+            float Slice;
+
+            struct IntersectionInfo
             {
                 float dstToVolume;
                 float dstInside;
             };
 
-            HitInfo tryHitVolume(float3 rayOrigin, float3 rayDir)
+            // Returns (dstToBox, dstInsideBox). If ray misses box, dstInsideBox will be zero
+            IntersectionInfo intersectVolume(float3 rayOrigin, float3 rayDir)
             {
-                HitInfo hitInfo;
+                // Adapted from: http://jcgt.org/published/0007/03/04/
+                float3 invRayDir = 1 / rayDir;
+                float3 t0 = (BoundsMin - rayOrigin) * invRayDir;
+                float3 t1 = (BoundsMax - rayOrigin) * invRayDir;
+                float3 tmin = min(t0, t1);
+                float3 tmax = max(t0, t1);
                 
-                hitInfo.dstToVolume = distance(rayOrigin, float3(0,0,0));
-                hitInfo.dstInside = 1;
+                float dstA = max(max(tmin.x, tmin.y), tmin.z);
+                float dstB = min(tmax.x, min(tmax.y, tmax.z));
+
+                // CASE 1: ray intersects box from outside (0 <= dstA <= dstB)
+                // dstA is dst to nearest intersection, dstB dst to far intersection
+
+                // CASE 2: ray intersects box from inside (dstA < 0 < dstB)
+                // dstA is the dst to intersection behind the ray, dstB is dst to forward intersection
+
+                // CASE 3: ray misses box (dstA > dstB)
+
+                IntersectionInfo hitInfo;
+                
+                hitInfo.dstToVolume = max(0, dstA);
+                hitInfo.dstInside = max(0, dstB - hitInfo.dstToVolume);
                 
                 return hitInfo;
             }
             
             float sampleDensity (float3 pos)
             {
-                float3 samplePos = pos;
+                float3 size = BoundsMax - BoundsMin;
+                float3 uvw = (size * .5 + pos) / NoiseScale;
                 
-                //float density = ShapeNoiseTex.SampleLevel(samplerShapeNoiseTex, samplePos, 0);
+                float4 density = ShapeNoiseTex.SampleLevel(samplerShapeNoiseTex, uvw, 0);
                 
-                return 0;
+                return density;
             }
 
+            float4 drawOnScreen (float2 uv)
+            {
+                float4 density = ShapeNoiseTex.SampleLevel(samplerShapeNoiseTex, float3(uv, Slice), 0) * Density;
+                
+                return density;
+            }
+            
             float4 frag (v2f i) : SV_Target
             {
+                #ifdef DRAW_ON_SCREEN
+                    return drawOnScreen(i.uv);
+                #endif
+                
                 float4 col = tex2D(_MainTex, i.uv);
 
                 float3 rayOrigin = _WorldSpaceCameraPos;
                 float3 rayDir = normalize(i.viewVector);
+
+                IntersectionInfo intersectionInfo = intersectVolume(rayOrigin, rayDir);
                 
-                return col;
+                float3 hitPos = rayOrigin + rayDir * intersectionInfo.dstToVolume;
+                float stepSize = intersectionInfo.dstInside / Steps;
+                
+                float dstTraveled = 0.0;
+                float totalDensity = 0.0;
+
+                while (dstTraveled < intersectionInfo.dstInside)
+                {
+                    float3 currentPos = hitPos + rayDir * dstTraveled;
+                    
+                    float density = sampleDensity(currentPos);
+                    totalDensity += density * stepSize;
+                    
+                    dstTraveled += stepSize;
+                }
+                
+                return col * exp(-totalDensity);
             }
             ENDCG
         }

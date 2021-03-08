@@ -18,7 +18,9 @@ namespace VolumetricRendering.Clouds.Noise
 
         [Header("Worley settings")] 
         [SerializeField] private ComputeShader _worleyCompute;
-        [SerializeField] private int _pointCount;
+        [SerializeField] private int _rep;
+        [SerializeField] private int _octaves;
+        [SerializeField] private float _amplitudeMul;
 
         private RenderTexture _noiseTexture;
 
@@ -44,24 +46,19 @@ namespace VolumetricRendering.Clouds.Noise
         {
             ComputeShader computeShader = _worleyCompute;
             int kernelIndex = computeShader.FindKernel("CSMain");
-            
-            // Sending buffers
-            Vector3[] points = GetRandomPoints(_pointCount, _size);
-            
-            ComputeBuffer pointsBuffer = new ComputeBuffer(points.Length, sizeof(float) * 3);
-            pointsBuffer.SetData(points);
-            computeShader.SetBuffer(kernelIndex, "Points", pointsBuffer);
-            
+
             // Sending settings
-            computeShader.SetInt("PointCount", _pointCount);
             computeShader.SetInt("Size", _size);
+            computeShader.SetInt("Rep", _rep);
+            computeShader.SetInt("Octaves", _octaves);
+            computeShader.SetFloat("AmplitudeMul", _amplitudeMul);
             
             // Creating the result texture
             RenderTexture texture = CreateTexture();
             computeShader.SetTexture(kernelIndex, "Result", texture);
             
             // Running the compute shader
-            computeShader.Dispatch(kernelIndex, _size, _size, 1);
+            computeShader.Dispatch(kernelIndex, _size, _size, _size);
 
             return texture;
         }
@@ -78,18 +75,6 @@ namespace VolumetricRendering.Clouds.Noise
             texture.wrapMode = TextureWrapMode.Repeat;
             
             return texture;
-        }
-        
-        private static Vector3[] GetRandomPoints(int count, int size)
-        {
-            Vector3[] points = new Vector3[count];
-
-            for (int i = 0; i < count; i++)
-            {
-                points[i] = new Vector3(Random.Range(0, size), Random.Range(0, size), Random.Range(0, size));
-            }
-            
-            return points;
         }
     }
 }

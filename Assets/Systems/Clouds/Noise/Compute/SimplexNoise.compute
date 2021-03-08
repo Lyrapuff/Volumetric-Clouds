@@ -1,6 +1,6 @@
 #pragma kernel CSMain
 
-#include "Assets/Shaders/Snoise.cginc"
+#include "Assets/Lib/Shaders/Snoise.cginc"
 
 float Scale;
 
