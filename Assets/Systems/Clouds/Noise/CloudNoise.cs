@@ -9,7 +9,7 @@ namespace VolumetricRendering.Clouds.Noise
     [ExecuteInEditMode]
     public class CloudNoise : MonoBehaviour, ICloudNoise
     {
-        public RenderTexture ShapeNoiseTexture => _noiseTexture;
+        public RenderTexture ShapeNoiseTexture => _shapeTexture;
         public RenderTexture DetailNoiseTexture { get; }
 
         [Header("Settings")] 
@@ -22,27 +22,32 @@ namespace VolumetricRendering.Clouds.Noise
         [SerializeField] private int _octaves;
         [SerializeField] private float _amplitudeMul;
 
-        private RenderTexture _noiseTexture;
+        private RenderTexture _shapeTexture;
 
         public void UpdateNoise()
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
 
-            RenderTexture worleyNoiseResult = EvaluateWorleyNoise();
-
-            if (_noiseTexture != null)
-            {
-                _noiseTexture.Release();
-            }
-            
-            _noiseTexture = worleyNoiseResult;
+            UpdateShapeTexture();
             
             stopwatch.Stop();
             
             Debug.Log($"Updated Noise in {stopwatch.Elapsed.TotalMilliseconds}ms.");
         }
 
-        private RenderTexture EvaluateWorleyNoise()
+        private void UpdateShapeTexture()
+        {
+            RenderTexture shapeTexture = GetShapeTexture();
+
+            if (_shapeTexture != null)
+            {
+                _shapeTexture.Release();
+            }
+            
+            _shapeTexture = shapeTexture;
+        }
+        
+        private RenderTexture GetShapeTexture()
         {
             ComputeShader computeShader = _worleyCompute;
             int kernelIndex = computeShader.FindKernel("CSMain");

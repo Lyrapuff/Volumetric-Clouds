@@ -1,13 +1,31 @@
 #pragma kernel CSMain
 
-#include "Assets/Lib/Shaders/Snoise.cginc"
+#include "Assets/Lib/Shaders/NoiseLib.cginc"
 
 float Scale;
 
-RWTexture2D<float4> Result;
+RWTexture3D<float4> Result;
 
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    Result[id.xy] = snoise(id.xy / Scale);
+    float Persistence = 0.32;
+    int Lacunarity = 3;
+    int Octaves = 3;
+
+    float3 pos = id / 256.0;
+    
+    float amplitude = 1;
+    int rep = 3;
+    float noise = 0;
+
+    for (int i = 0; i < Octaves; i++)
+    {
+        noise += pnoise(pos, rep) * amplitude;
+
+        amplitude *= Persistence;
+        rep *= Lacunarity;
+    }
+    
+    Result[id.xyz] = noise;
 }

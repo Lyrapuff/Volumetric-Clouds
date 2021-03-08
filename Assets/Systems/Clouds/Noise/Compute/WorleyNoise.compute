@@ -2,8 +2,6 @@
 
 #include "Assets/Lib/Shaders/NoiseLib.cginc"
 
-StructuredBuffer<float3> Points;
-
 int Size;
 int Rep;
 int Octaves;
@@ -11,20 +9,29 @@ float AmplitudeMul;
 
 RWTexture3D<float4> Result;
 
-[numthreads(8,8,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
+float getWorley (float3 pos, int octaves, int rep)
 {
-    float3 pos = float3(id.x, id.y, id.z) / (float)Size;
-    int rep = Rep;
+    pos = float3(pos.x, pos.y, pos.z) / (float)Size;
     float amplitude = 0.5;
-    float value = 0;
+    float noise = 0;
 
-    for (int i = 0; i < Octaves; i++)
+    for (int i = 0; i < octaves; i++)
     {
-        value += amplitude * (1 - worley(pos, 1, false, rep).x);
+        noise += amplitude * (1 - worley(pos, 1, false, rep).x);
         rep	*= 2;
         amplitude *= AmplitudeMul;
     }
+
+    return noise;
+}
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float r = getWorley(id, Octaves, Rep);
+    float g = getWorley(id, Octaves, Rep + 2);
+    float b = getWorley(id, Octaves, Rep + 4);
+    float a = getWorley(id, Octaves, Rep + 6);
     
-    Result[id.xyz] = value;
+    Result[id.xyz] = float4(r, g, b, a);
 }
