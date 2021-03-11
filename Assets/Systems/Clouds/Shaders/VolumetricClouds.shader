@@ -130,30 +130,30 @@
                 return hitInfo;
             }
 
-            // Henyey-Greenstein
-            float hg (float a, float g)
+            // Henyey-Greenstein's phase function
+            float hg (float dotAngle, float g)
             {
-                float g2 = g*g;
-                return (1-g2) / (4*3.1415*pow(1+g2-2*g*(a), 1.5));
+                float g2 = g * g;
+                return (1 - g2) / (4 * 3.1416 * pow(1 + g2 - 2 * g * dotAngle, 1.5));
             }
 
-            float phase (float a)
+            float phase (float dotAngle)
             {
-                float blend = .5;
-                float hgBlend = hg(a,PhaseParams.x) * (1-blend) + hg(a,-PhaseParams.y) * blend;
-                return PhaseParams.z + hgBlend*PhaseParams.w;
-            }
+                float firstHg = PhaseParams.z * pow(saturate(dotAngle), 0.1);
+                float secondHg = hg(dotAngle, PhaseParams.x);
 
-            float beer (float d)
-            {
-                float beer = exp(-d);
-                return beer;
+                float inScatterHg = max(firstHg, secondHg);
+                float outScatterHg = hg(dotAngle, -PhaseParams.y);
+                
+                return lerp(inScatterHg, outScatterHg, PhaseParams.w);
             }
             
             float sampleDensity (float3 pos)
             {
                 float3 size = BoundsMax - BoundsMin;
                 float3 uvw = (size * .5 + pos) / NoiseScale;
+
+                float factor = sin((pos.y - BoundsMin.y) / size.y * 3.1416);
                 
                 float4 shapeSample = ShapeNoiseTex.SampleLevel(samplerShapeNoiseTex, uvw / NoiseScale, 0);
 
@@ -161,7 +161,7 @@
 
                 float4 weatherSample = WeatherMapTex.SampleLevel(samplerWeatherMapTex, pos / WeatherMapScale, 0);
                 
-                return density * Density * weatherSample;
+                return density * Density * weatherSample * factor;
             }
 
             float computeSunTransmittence (float3 pos)
@@ -175,12 +175,11 @@
                 for (int i = 0; i < LightSteps; i++)
                 {
                     pos += _WorldSpaceLightPos0 * stepSize;
+                    
                     totalDensity += max(0, sampleDensity(pos) * stepSize);
                 }
-
-                float transmittance = exp(-totalDensity * LightAbsorbtionTowardsSun);
                 
-                return DarknessThreshold + transmittance * (1 - DarknessThreshold);
+                return exp(-LightAbsorbtionTowardsSun * totalDensity);
             }
             
             float4 drawOnScreen (float2 uv)
@@ -240,7 +239,8 @@
                 IntersectionInfo intersectionInfo = tryIntersectVolume(rayOrigin, rayDir);
                 
                 float3 hitPos = rayOrigin + rayDir * intersectionInfo.dstToVolume;
-                float stepSize = intersectionInfo.dstInside / Steps;
+                float steps = lerp(Steps, 15, clamp(intersectionInfo.dstToVolume / 3000, 0, 1));
+                float stepSize = intersectionInfo.dstInside / steps;
 
                 float randomOffset = BlueNoiseTex.SampleLevel(samplerBlueNoiseTex, squareUV(i.uv * 3), 0);
                 randomOffset *= 3;
@@ -261,9 +261,11 @@
 
                     if (density > 0)
                     {
-                        float sunlightTransmittence = computeSunTransmittence(currentPos);
-                        lightEnergy += density * transmittance * sunlightTransmittence * phaseVal;
+                        float transmittanceAtPoint = computeSunTransmittence(currentPos);
+                        
                         transmittance *= exp(-density * LightAbsorbtionThroughCloud);
+                        
+                        lightEnergy += density * transmittance * transmittanceAtPoint * phaseVal;
 
                         if (transmittance < 0.01)
                         {
@@ -273,10 +275,13 @@
                     
                     dstTraveled += stepSize;
                 }
+
+                float4 atmosphereColor = float4(0.7, 0.6, 0.3, 1);
+                float atmosphereFactor = dot(rayDir, float3(0, 1, 0));
                 
-                float3 cloudColor = lightEnergy * _LightColor0;
+                float4 cloudColor = float4(lightEnergy * _LightColor0, atmosphereFactor);
                 
-                return float4(col * transmittance + cloudColor, 0);
+                return col * transmittance + cloudColor * (atmosphereColor + atmosphereFactor);
             }
             ENDCG
         }

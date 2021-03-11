@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 144a67acacfb4ce4c93cbe049af5bdec, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -161,8 +161,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 517535134}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 200, z: 0}
-  m_LocalScale: {x: 5000, y: 30, z: 5000}
+  m_LocalPosition: {x: 0, y: 800, z: 0}
+  m_LocalScale: {x: 10000, y: 300, z: 10000}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 1
@@ -195,7 +195,7 @@ Light:
   serializedVersion: 10
   m_Type: 1
   m_Shape: 0
-  m_Color: {r: 1, g: 0.9720949, b: 0.8443396, a: 1}
+  m_Color: {r: 0.7294118, g: 0.5686275, b: 0.38431373, a: 1}
   m_Intensity: 1
   m_Range: 10
   m_SpotAngle: 30
@@ -253,108 +253,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 705507993}
-  m_LocalRotation: {x: 0.8927347, y: -0.08577434, z: 0.39840487, w: 0.19220081}
+  m_LocalRotation: {x: 0.9750382, y: -0.02479392, z: 0.16491538, w: 0.14659044}
   m_LocalPosition: {x: 0, y: 100, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 155.7, y: -48.1, z: 0}
---- !u!1 &1683522131
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1683522135}
-  - component: {fileID: 1683522134}
-  - component: {fileID: 1683522133}
-  - component: {fileID: 1683522132}
-  m_Layer: 0
-  m_Name: Floor
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!65 &1683522132
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1683522131}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!23 &1683522133
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1683522131}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &1683522134
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1683522131}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!4 &1683522135
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1683522131}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -3, z: 0}
-  m_LocalScale: {x: 30, y: 1, z: 30}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 3
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 162.9, y: -19.2, z: 0}
 --- !u!1 &1892633861
 GameObject:
   m_ObjectHideFlags: 0
@@ -391,23 +296,23 @@ MonoBehaviour:
   _shader: {fileID: 4800000, guid: defe8e75b2de4d3cb0cf795e44f308e2, type: 3}
   _blueNoise: {fileID: 2800000, guid: b42f1720eeff39247801e94218e69c10, type: 3}
   _noiseScale: 28
-  _weatherMapScale: 1500
+  _weatherMapScale: 2500
   _density: 1
   _coverage: 1
   _volume: {fileID: 517535136}
-  _steps: 20
+  _steps: 30
   _extinctionFactor: 0.34
   _scatteringFactor: 0.38
   _lightSteps: 4
-  _lightAbsorbtionThroughCloud: 0.2
-  _lightAbsorbtionTowardsSun: 0.45
+  _lightAbsorbtionThroughCloud: 0.05
+  _lightAbsorbtionTowardsSun: 0.05
   _darknessThreshold: 0.15
-  _forwardScattering: 0.827
+  _forwardScattering: 0.37
   _backScattering: 0.3
-  _baseBrightness: 0.319
-  _phaseFactor: 0.148
+  _baseBrightness: 0
+  _phaseFactor: 0.475
   _drawOnScreen: 0
-  _textureToDraw: 2
+  _textureToDraw: 0
   _channelToDraw: 0
   _slice: 0
 --- !u!81 &1892633863
@@ -468,13 +373,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1892633861}
-  m_LocalRotation: {x: -0.21004707, y: -0.16294068, z: -0.035526805, w: 0.9633631}
+  m_LocalRotation: {x: 0.14318596, y: 0.16500074, z: 0.02421807, w: -0.975544}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: -24.6, y: -19.2, z: 0}
+  m_LocalEulerAnglesHint: {x: -16.7, y: -379.2, z: 0}
 --- !u!114 &1892633866
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -492,7 +397,7 @@ MonoBehaviour:
   _rep: 6
   _lacunarity: 2
   _octaves: 4
-  _persistence: 0.43
+  _persistence: 0.333
 --- !u!114 &1892633867
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -508,6 +413,6 @@ MonoBehaviour:
   _computeShader: {fileID: 7200000, guid: 8f5c7bcfcad528f46b16935fc3efb022, type: 3}
   _size: 256
   _rep: 3
-  _lacunarity: 3
+  _lacunarity: 4
   _octaves: 4
-  _persistence: 0.549
+  _persistence: 0.345

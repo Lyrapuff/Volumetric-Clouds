@@ -8,7 +8,7 @@ float getWorley (float3 pos, int octaves, int rep, float persistence)
     for (int i = 0; i < octaves; i++)
     {
         noise += amplitude * (1 - worley(pos, 1, false, rep).x);
-        rep	*= 2;
+        rep *= 2;
         amplitude *= persistence;
     }
 
