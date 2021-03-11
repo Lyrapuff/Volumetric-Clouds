@@ -157,11 +157,11 @@
                 
                 float4 shapeSample = ShapeNoiseTex.SampleLevel(samplerShapeNoiseTex, uvw / NoiseScale, 0);
 
-                float density = shapeSample.r * 0.625 + shapeSample.g * 0.25 + shapeSample.b * 0.125;
+                float density = shapeSample.r * 0.575 + shapeSample.g * 0.22 + shapeSample.b * 0.13 + shapeSample.a * 0.075;
 
                 float4 weatherSample = WeatherMapTex.SampleLevel(samplerWeatherMapTex, pos / WeatherMapScale, 0);
                 
-                return density * Density * weatherSample.r;
+                return density * Density * weatherSample;
             }
 
             float computeSunTransmittence (float3 pos)
@@ -243,7 +243,7 @@
                 float stepSize = intersectionInfo.dstInside / Steps;
 
                 float randomOffset = BlueNoiseTex.SampleLevel(samplerBlueNoiseTex, squareUV(i.uv * 3), 0);
-                randomOffset *= 4;
+                randomOffset *= 3;
                 
                 float cosAngle = dot(rayDir, _WorldSpaceLightPos0.xyz);
                 float phaseVal = phase(cosAngle);

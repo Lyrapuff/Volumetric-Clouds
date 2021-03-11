@@ -1,12 +1,11 @@
+using System;
 using Systems.Extensions;
 using UnityEngine;
-using VolumetricRendering.Clouds.Noise;
+using VolumetricRendering.Clouds.Generators;
 
 namespace VolumetricRendering.Clouds
 {
     [ExecuteInEditMode]
-    [RequireComponent(typeof(ICloudNoise))]
-    [RequireComponent(typeof(IWeatherMap))]
     public partial class VolumetricCloudsEffect : MonoBehaviour
     {
         [Header("References")]
@@ -56,10 +55,19 @@ namespace VolumetricRendering.Clouds
         [Range(0f, 1f)]
         [SerializeField] private float _slice;
 
-        private ICloudNoise _cloudNoise;
-        private IWeatherMap _weatherMap;
+        private ICloudGenerator[] _cloudGenerators;
         
         private Material _material;
+
+        private void Awake()
+        {
+            _cloudGenerators ??= GetComponents<ICloudGenerator>();
+
+            foreach (ICloudGenerator cloudGenerator in _cloudGenerators)
+            {
+                cloudGenerator.Generate();
+            }
+        }
 
         private void OnRenderImage(RenderTexture src, RenderTexture dest)
         {
@@ -73,28 +81,18 @@ namespace VolumetricRendering.Clouds
 
         private void PokeDependencies()
         {
-            _cloudNoise ??= GetComponent<ICloudNoise>();
-            
-            if (_cloudNoise.ShapeNoiseTexture == null)
-            {
-                _cloudNoise.UpdateNoise();
-            }
-
-            _weatherMap ??= GetComponent<IWeatherMap>();
-
-            if (_weatherMap.WeatherMapTexture == null)
-            {
-                _weatherMap.UpdateMap();
-            }
-            
             _material ??= new Material(_shader);
+            
+            _cloudGenerators ??= GetComponents<ICloudGenerator>();
+            
+            foreach (ICloudGenerator cloudGenerator in _cloudGenerators)
+            {
+                cloudGenerator.Apply(_material);
+            }
         }
         
         private void SendSettings(Material material)
         {
-            material.SetTexture(ShapeNoiseTex, _cloudNoise.ShapeNoiseTexture);
-            material.SetTexture(DetailNoiseTex, _cloudNoise.DetailNoiseTexture);
-            material.SetTexture(WeatherMapTex, _weatherMap.WeatherMapTexture);
             material.SetTexture(BlueNoiseTex, _blueNoise);
             material.SetFloat(NoiseScale, _noiseScale);
             material.SetFloat(WeatherMapScale, _weatherMapScale);

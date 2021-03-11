@@ -1,0 +1,20 @@
+#pragma kernel CSMain
+
+#include "Assets/Lib/Shaders/QuickNoise.cginc"
+
+int Size;
+float Persistence;
+int Lacunarity;
+int Octaves;
+int Rep;
+
+RWTexture3D<float4> Result;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float3 pos = float3(id.xyz) / (float)Size;
+    float noise = getPerlin(pos, Persistence, Lacunarity, Octaves, Rep);
+    
+    Result[id.xyz] = noise;
+}

@@ -1,0 +1,25 @@
+#pragma kernel CSMain
+
+#include "Assets/Lib/Shaders/QuickNoise.cginc"
+
+int Size;
+int Octaves;
+float Persistence;
+int Rep;
+int Lacunarity;
+
+RWTexture3D<float4> Result;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float3 pos = float3(id.xyz) / (float)Size;
+
+    float perlin = getPerlin(pos, Persistence, Lacunarity, Octaves, Rep);
+    float r = getWorley(pos, Octaves, Rep, Persistence) * 0.5 + perlin * 0.5;
+    float g = getWorley(pos, Octaves, Rep + Lacunarity, Persistence);
+    float b = getWorley(pos, Octaves, Rep + Lacunarity * 2, Persistence);
+    float a = getWorley(pos, Octaves, Rep + Lacunarity * 3, Persistence);
+
+    Result[id.xyz] = float4(r, g, b, a);
+}

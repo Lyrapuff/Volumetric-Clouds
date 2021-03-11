@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-namespace VolumetricRendering.Clouds.Noise.Editor
+namespace VolumetricRendering.Clouds.Generators.Editor
 {
     [CustomEditor(typeof(WeatherMap))]
     public class WeatherMapEditor : UnityEditor.Editor
@@ -14,9 +14,9 @@ namespace VolumetricRendering.Clouds.Noise.Editor
             
             if (GUILayout.Button("Update Weather Map"))
             {
-                if (target is IWeatherMap weatherMap)
+                if (target is ICloudGenerator weatherMap)
                 {
-                    weatherMap.UpdateMap();
+                    weatherMap.Generate();
                 }
             }
         }

@@ -1,9 +1,9 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-namespace VolumetricRendering.Clouds.Noise.Editor
+namespace VolumetricRendering.Clouds.Generators.Editor
 {
-    [CustomEditor(typeof(CloudNoise))]
+    [CustomEditor(typeof(ShapeNoiseGenerator))]
     public class CloudNoiseEdior : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
@@ -14,9 +14,9 @@ namespace VolumetricRendering.Clouds.Noise.Editor
             
             if (GUILayout.Button("Update Noise"))
             {
-                if (target is ICloudNoise cloudNoise)
+                if (target is ICloudGenerator cloudNoise)
                 {
-                    cloudNoise.UpdateNoise();
+                    cloudNoise.Generate();
                 }
             }
         }
