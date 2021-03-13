@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Rendering;
 using Debug = UnityEngine.Debug;
 
 namespace VolumetricRendering.Clouds.Generators
@@ -9,7 +8,11 @@ namespace VolumetricRendering.Clouds.Generators
     public class WeatherMap : MonoBehaviour, ICloudGenerator
     {
         [SerializeField] private ComputeShader _computeShader;
-        [Range(128, 512)]
+        [SerializeField] private Texture2D _lowCoverageTexture;
+        [SerializeField] private Texture2D _peakHeightTexture;
+        [SerializeField] private Texture2D _densityTexture;
+        [Header("Noise")]
+        [Range(128, 2048)]
         [SerializeField] private int _size;
         [Range(1, 16)]
         [SerializeField] private int _rep;
@@ -44,6 +47,9 @@ namespace VolumetricRendering.Clouds.Generators
         {
             int kernelIndex = _computeShader.FindKernel("CSMain");
             
+            _computeShader.SetTexture(kernelIndex, "LowCoverageTex", _lowCoverageTexture);
+            _computeShader.SetTexture(kernelIndex, "PeakHeightTex", _peakHeightTexture);
+            _computeShader.SetTexture(kernelIndex, "DensityTex", _densityTexture);
             _computeShader.SetInt("Size", _size);
             _computeShader.SetInt("Octaves", _octaves);
             _computeShader.SetFloat("Persistence", _persistence);
@@ -53,7 +59,7 @@ namespace VolumetricRendering.Clouds.Generators
             RenderTexture texture = CreateTexture();
             _computeShader.SetTexture(kernelIndex, "Result", texture);
             
-            _computeShader.Dispatch(kernelIndex, _size, _size, _size);
+            _computeShader.Dispatch(kernelIndex, _size, _size, 1);
 
             if (_weatherMapTexture != null)
             {
@@ -67,7 +73,6 @@ namespace VolumetricRendering.Clouds.Generators
         {
             RenderTexture texture = new RenderTexture(_size, _size, 0);
             texture.graphicsFormat = GraphicsFormat.R16G16B16A16_UNorm;
-            texture.dimension = TextureDimension.Tex3D;
             texture.volumeDepth = _size;
             texture.enableRandomWrite = true;
             texture.Create();

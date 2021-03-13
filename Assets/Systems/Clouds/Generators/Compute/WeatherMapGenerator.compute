@@ -7,14 +7,17 @@ float Persistence;
 int Lacunarity;
 int Octaves;
 int Rep;
+Texture2D<float4> LowCoverageTex;
+Texture2D<float4> PeakHeightTex;
+Texture2D<float4> DensityTex;
 
-RWTexture3D<float4> Result;
+RWTexture2D<float4> Result;
 
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     float3 pos = float3(id.xyz) / (float)Size;
-    float noise = getPerlin(pos, Persistence, Lacunarity, Octaves, Rep);
+    float perlin = getPerlin(pos, Persistence, Lacunarity, Octaves, Rep);
     
-    Result[id.xyz] = noise;
+    Result[id.xy] = float4(perlin, 0, 0, 0);
 }

@@ -162,7 +162,7 @@ Transform:
   m_GameObject: {fileID: 517535134}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 800, z: 0}
-  m_LocalScale: {x: 10000, y: 300, z: 10000}
+  m_LocalScale: {x: 30000, y: 450, z: 30000}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 1
@@ -195,7 +195,7 @@ Light:
   serializedVersion: 10
   m_Type: 1
   m_Shape: 0
-  m_Color: {r: 0.7294118, g: 0.5686275, b: 0.38431373, a: 1}
+  m_Color: {r: 1, g: 0.8345714, b: 0.3820755, a: 1}
   m_Intensity: 1
   m_Range: 10
   m_SpotAngle: 30
@@ -253,13 +253,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 705507993}
-  m_LocalRotation: {x: 0.9750382, y: -0.02479392, z: 0.16491538, w: 0.14659044}
+  m_LocalRotation: {x: -0.9708343, y: 0.022234151, z: -0.09946988, w: -0.21700718}
   m_LocalPosition: {x: 0, y: 100, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 162.9, y: -19.2, z: 0}
+  m_LocalEulerAnglesHint: {x: 154.8, y: -371.7, z: 0}
 --- !u!1 &1892633861
 GameObject:
   m_ObjectHideFlags: 0
@@ -295,25 +295,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _shader: {fileID: 4800000, guid: defe8e75b2de4d3cb0cf795e44f308e2, type: 3}
   _blueNoise: {fileID: 2800000, guid: b42f1720eeff39247801e94218e69c10, type: 3}
-  _noiseScale: 28
-  _weatherMapScale: 2500
+  _noiseScale: 130.42
+  _weatherMapScale: 26000
   _density: 1
   _coverage: 1
   _volume: {fileID: 517535136}
-  _steps: 30
+  _steps: 10
   _extinctionFactor: 0.34
   _scatteringFactor: 0.38
   _lightSteps: 4
   _lightAbsorbtionThroughCloud: 0.05
   _lightAbsorbtionTowardsSun: 0.05
   _darknessThreshold: 0.15
-  _forwardScattering: 0.37
+  _forwardScattering: 0.732
   _backScattering: 0.3
-  _baseBrightness: 0
-  _phaseFactor: 0.475
+  _baseBrightness: 0.068
+  _phaseFactor: 0.452
   _drawOnScreen: 0
-  _textureToDraw: 0
-  _channelToDraw: 0
+  _textureToDraw: 2
+  _channelToDraw: 1
   _slice: 0
 --- !u!81 &1892633863
 AudioListener:
@@ -373,13 +373,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1892633861}
-  m_LocalRotation: {x: 0.14318596, y: 0.16500074, z: 0.02421807, w: -0.975544}
+  m_LocalRotation: {x: 0.19765666, y: 0.0025661553, z: 0.00051742763, w: -0.9802678}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: -16.7, y: -379.2, z: 0}
+  m_LocalEulerAnglesHint: {x: -22.8, y: -360.3, z: 0}
 --- !u!114 &1892633866
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -394,10 +394,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _computeShader: {fileID: 7200000, guid: 9c1fc6b56d5505d40bd25c2503a27a48, type: 3}
   _size: 128
-  _rep: 6
-  _lacunarity: 2
+  _rep: 3
+  _lacunarity: 3
   _octaves: 4
-  _persistence: 0.333
+  _persistence: 0.537
 --- !u!114 &1892633867
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -411,8 +411,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _computeShader: {fileID: 7200000, guid: 8f5c7bcfcad528f46b16935fc3efb022, type: 3}
-  _size: 256
+  _lowCoverageTexture: {fileID: 2800000, guid: 1d96e4905d77f134bb7bfa07758caf75, type: 3}
+  _peakHeightTexture: {fileID: 2800000, guid: 31e4e836024fbcb4c868db3ecda4fa45, type: 3}
+  _densityTexture: {fileID: 2800000, guid: 343ecc3e51f52234ba45b7bc0ca1ae91, type: 3}
+  _size: 2048
   _rep: 3
-  _lacunarity: 4
-  _octaves: 4
-  _persistence: 0.345
+  _lacunarity: 6
+  _octaves: 2
+  _persistence: 0.239
