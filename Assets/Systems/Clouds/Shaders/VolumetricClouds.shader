@@ -102,37 +102,6 @@
                 float y = uv.y * height;
                 return float2 (x/scale, y/scale);
             }
-            
-            // Returns (dstToBox, dstInsideBox). If ray misses box, dstInsideBox will be zero
-            IntersectionInfo tryIntersectVolume(float3 ro, float3 rd)
-            {
-                const float sr = 80000;
-                const float3 sc = float3(0, -40000, 0);
-
-                IntersectionInfo intersectionInfo;
-                intersectionInfo.dstToVolume = -1;
-                intersectionInfo.dstInside = -1;
-
-                float a = dot(rd, rd);
-                float b = -1 * dot(sc, rd);
-                float c = dot(sc, sc)-sr*sr;
-
-                float det = b*b-4*a*c;
-
-                if (a < 0 || det < 0)
-                {
-                    return intersectionInfo;
-                }
-
-                float x1 = sqrt(det)/(2*a);
-                float t1 = -b+x1;
-                float t2 = -b-x1;
-                
-                intersectionInfo.dstToVolume = t1;
-                intersectionInfo.dstInside = 650;
-
-                return intersectionInfo;
-            }
 
             // Henyey-Greenstein's phase function
             float hg(float dotAngle, float g)
@@ -145,6 +114,37 @@
             {
                 float hgBlend = hg(dotAngle, PhaseParams.x) * 0.5 + hg(dotAngle, -PhaseParams.y) * 0.5;
                 return PhaseParams.z + hgBlend * PhaseParams.w;
+            }
+            
+            IntersectionInfo tryIntersectVolume(float3 ro, float3 rd)
+            {
+                const float sr = 150000;
+                const float3 sc = float3(0, -130000, 0);
+
+                IntersectionInfo intersectionInfo;
+                intersectionInfo.dstToVolume = -1;
+                intersectionInfo.dstInside = -1;
+
+                const float3 oc = ro - sc;
+
+                const float a = dot(rd, rd);
+                const float b = 2 * dot(oc, rd);
+                const float c = dot(oc, oc)-sr*sr;
+
+                const float det = b*b-4*a*c;
+
+                if (det < 0)
+                {
+                    return intersectionInfo;
+                }
+                
+                const float x1 = sqrt(det)/a;
+                const float t1 = -b+x1;
+                
+                intersectionInfo.dstToVolume = t1;
+                intersectionInfo.dstInside = 1000;
+
+                return intersectionInfo;
             }
             
             float sampleDensity (float3 pos)
@@ -276,9 +276,9 @@
                     
                     float4 backGroundCol = tex2D(_MainTex, i.uv);
 
-                    float blending = lerp(0.15, 1, saturate(1 - dot(rayDir, float3(0, 2, 0))));
+                    float blending = lerp(0, 1, saturate(1 - dot(rayDir, float3(0, 2, 0))));
                     
-                    float4 cloudCol = float4(lightEnergy * _LightColor0 * backGroundCol * (1 - blending) + backGroundCol * blending * (1 - transmittance), 0);
+                    float4 cloudCol = float4(lightEnergy * _LightColor0 * (1 - blending) + backGroundCol * blending * (1 - transmittance), 0);
                     float4 col = backGroundCol * transmittance + cloudCol;
                     
                     return col;

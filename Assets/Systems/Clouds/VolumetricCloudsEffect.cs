@@ -30,7 +30,9 @@ namespace VolumetricRendering.Clouds
         
         [Header("Lightmarch settings")]
         [SerializeField] private int _lightSteps;
+        [Range(0f, 1f)]
         [SerializeField] private float _lightAbsorbtionThroughCloud;
+        [Range(0f, 1f)]
         [SerializeField] private float _lightAbsorbtionTowardsSun;
         [SerializeField] private float _darknessThreshold;
         
@@ -51,7 +53,6 @@ namespace VolumetricRendering.Clouds
         [SerializeField] private bool _drawOnScreen;
         [SerializeField] private TextureType _textureToDraw;
         [SerializeField] private Channel _channelToDraw;
-        [Tooltip("Only for 3D Textures, such as Shape and Detail noises.")]
         [Range(0f, 1f)]
         [SerializeField] private float _slice;
 
