@@ -49,6 +49,8 @@
             sampler2D _MainTex;
             sampler2D _CameraDepthTexture;
 
+            float4 CloudColor;
+            
             Texture3D<float4> ShapeNoiseTex;
             SamplerState samplerShapeNoiseTex;
             Texture3D<float4> DetailNoiseTex;
@@ -115,18 +117,11 @@
                 float hgBlend = hg(dotAngle, PhaseParams.x) * 0.5 + hg(dotAngle, -PhaseParams.y) * 0.5;
                 return PhaseParams.z + hgBlend * PhaseParams.w;
             }
-            
-            IntersectionInfo tryIntersectVolume(float3 ro, float3 rd)
+
+            float intersectSphere(float sr, float3 sc, float3 ro, float3 rd)
             {
-                const float sr = 150000;
-                const float3 sc = float3(0, -130000, 0);
-
-                IntersectionInfo intersectionInfo;
-                intersectionInfo.dstToVolume = -1;
-                intersectionInfo.dstInside = -1;
-
                 const float3 oc = ro - sc;
-
+                
                 const float a = dot(rd, rd);
                 const float b = 2 * dot(oc, rd);
                 const float c = dot(oc, oc)-sr*sr;
@@ -135,36 +130,57 @@
 
                 if (det < 0)
                 {
-                    return intersectionInfo;
+                    return -1;
                 }
                 
                 const float x1 = sqrt(det)/a;
                 const float t1 = -b+x1;
+
+                return t1 < 0 ? -1 : t1;
+            }
+            
+            IntersectionInfo tryIntersectVolume(float3 ro, float3 rd)
+            {
+                const float s1r = 200000;
+                const float3 s1c = float3(ro.x, -190000, ro.z);
+
+                const float s2r = s1r + ExtinctionFactor;
+                const float3 s2c = s1c;
+
+                IntersectionInfo intersectionInfo;
+                intersectionInfo.dstToVolume = -1;
+                intersectionInfo.dstInside = -1;
+
+                const float t1 = intersectSphere(s1r, s1c, ro, rd);
+                const float t2 = intersectSphere(s2r, s2c, ro, rd);
+
+                if (t1 == -1 || t2 == -1)
+                {
+                    return intersectionInfo;
+                }
                 
                 intersectionInfo.dstToVolume = t1;
-                intersectionInfo.dstInside = 1000;
+                intersectionInfo.dstInside = t2 - t1;
 
                 return intersectionInfo;
             }
             
             float sampleDensity (float3 pos)
             {
-                float3 uvw = pos / NoiseScale;
+                float3 densityPos = pos / NoiseScale;
                 
-                float4 shape = ShapeNoiseTex.SampleLevel(samplerShapeNoiseTex, uvw / NoiseScale, 0);
+                float4 shape = ShapeNoiseTex.SampleLevel(samplerShapeNoiseTex, densityPos / NoiseScale, 0);
                 float density = remap(shape.r, shape.g * 0.625 + shape.b * 0.25 + shape.a * 0.125 - 1, 1, 0 ,1);
 
                 float2 weatherPos = pos.xz;
-                float4 weather = WeatherMapTex.SampleLevel(samplerWeatherMapTex, weatherPos / WeatherMapScale, 0);
+                float4 weatherMap = WeatherMapTex.SampleLevel(samplerWeatherMapTex, weatherPos / WeatherMapScale, 0);
                 
-                return density * Density * weather.r;
+                return density * Density * weatherMap.r;
             }
 
             float computeSunTransmittence(float3 pos)
             {
-                IntersectionInfo intersectionInfo = tryIntersectVolume(pos, _WorldSpaceLightPos0);
-
-                float stepSize = intersectionInfo.dstInside / LightSteps;
+                float stepSize = ExtinctionFactor / LightSteps;
 
                 float totalDensity = 0;
 
@@ -225,64 +241,74 @@
             {
                 #ifdef DRAW_ON_SCREEN
                     return drawOnScreen(i.uv);
-                #else
-                    float3 rayOrigin = _WorldSpaceCameraPos.xyz;
-                    float3 rayDir = normalize(i.viewVector);
-                    
-                    IntersectionInfo intersectionInfo = tryIntersectVolume(rayOrigin, rayDir);
-
-                    if (intersectionInfo.dstInside == -1)
-                    {
-                        return tex2D(_MainTex, i.uv);
-                    }
-                    
-                    float3 hitPos = rayOrigin + rayDir * intersectionInfo.dstToVolume;
-                    //float steps = lerp(Steps, 15, clamp(intersectionInfo.dstToVolume / 3000, 0, 1));
-                    float stepSize = intersectionInfo.dstInside / Steps;
-
-                    float randomOffset = BlueNoiseTex.SampleLevel(samplerBlueNoiseTex, squareUV(i.uv * 3), 0);
-                    randomOffset *= 3;
-                    
-                    float cosAngle = dot(rayDir, _WorldSpaceLightPos0.xyz);
-                    float phaseVal = phase(cosAngle);
-                    
-                    float dstTraveled = randomOffset;
-
-                    float transmittance = 1;
-                    float3 lightEnergy = 0;
-                    
-                    while (dstTraveled < intersectionInfo.dstInside)
-                    {
-                        float3 currentPos = hitPos + rayDir * dstTraveled;
-                        
-                        float density = sampleDensity(currentPos) * stepSize;
-
-                        if (density > 0)
-                        {
-                            float transmittanceAtPoint = computeSunTransmittence(currentPos);
-                            
-                            transmittance *= exp(-density * LightAbsorbtionThroughCloud);
-                            
-                            lightEnergy += density * transmittance * transmittanceAtPoint * phaseVal;
-
-                            if (transmittance < 0.01)
-                            {
-                                break;
-                            }
-                        }
-                        
-                        dstTraveled += stepSize;
-                    }
-                    
-                    float4 backGroundCol = tex2D(_MainTex, i.uv);
-
-                    float blending = lerp(0, 1, saturate(1 - dot(rayDir, float3(0, 2, 0))));
-                    
-                    float4 cloudCol = float4(lightEnergy * _LightColor0 * (1 - blending) + backGroundCol * blending * (1 - transmittance), 0);
-                    float4 col = backGroundCol * transmittance + cloudCol;
-                    
-                    return col;
                 #endif
+                
+                float3 rayOrigin = _WorldSpaceCameraPos.xyz;
+                float3 rayDir = normalize(i.viewVector);
+                
+                IntersectionInfo intersectionInfo = tryIntersectVolume(rayOrigin, rayDir);
+
+                float depthSample = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, i.uv);
+                float depth = LinearEyeDepth(depthSample) * intersectionInfo.dstToVolume-10000000;
+
+                if (intersectionInfo.dstInside == -1)
+                {
+                     return tex2D(_MainTex, i.uv);
+                }
+
+                if (intersectionInfo.dstInside > depth)
+                {
+                    return tex2D(_MainTex, i.uv);
+                }
+                
+                float3 hitPos = rayOrigin + rayDir * intersectionInfo.dstToVolume;
+                //float steps = lerp(Steps, 15, clamp(intersectionInfo.dstToVolume / 3000, 0, 1));
+                float stepSize = intersectionInfo.dstInside / Steps;
+
+                float randomOffset = BlueNoiseTex.SampleLevel(samplerBlueNoiseTex, squareUV(i.uv * 3), 0);
+                randomOffset *= 3;
+                
+                float cosAngle = dot(rayDir, _WorldSpaceLightPos0.xyz);
+                float phaseVal = phase(cosAngle);
+                
+                float dstTraveled = randomOffset;
+
+                float transmittance = 1;
+                float3 lightEnergy = 0;
+            
+                while (dstTraveled < intersectionInfo.dstInside)
+                {
+                    float3 currentPos = hitPos + rayDir * dstTraveled;
+                    
+                    float density = sampleDensity(currentPos) * stepSize;
+
+                    if (density > 0)
+                    {
+                        float transmittanceAtPoint = computeSunTransmittence(currentPos);
+                        
+                        transmittance *= exp(-density * LightAbsorbtionThroughCloud);
+                        
+                        lightEnergy += density * transmittance * transmittanceAtPoint * phaseVal;
+
+                        if (transmittance < 0.01)
+                        {
+                            break;
+                        }
+                    }
+                    
+                    dstTraveled += stepSize;
+                }
+                
+                float4 backgroundCol = tex2D(_MainTex, i.uv);
+
+                float blending = lerp(0, 1, saturate(1 - dot(rayDir, float3(0, 6, 0))));
+
+                lightEnergy = lightEnergy + CloudColor.xyz * (1 - transmittance) * 2;
+            
+                float4 cloudCol = float4(lightEnergy * _LightColor0 * (1 - blending) + backgroundCol * blending * (1 - transmittance), 0);
+                float4 col = backgroundCol * transmittance + cloudCol;
+                
+                return col;
             }
             ENDCG
         }

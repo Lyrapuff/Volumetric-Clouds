@@ -11,7 +11,8 @@ namespace VolumetricRendering.Clouds
         [Header("References")]
         [SerializeField] private Shader _shader;
 
-        [Header("Settings")]
+        [Header("Settings")] 
+        [SerializeField] private Color _cloudColor;
         [SerializeField] private Texture2D _blueNoise;
         [SerializeField] private float _noiseScale;
         [SerializeField] private float _weatherMapScale;
@@ -94,6 +95,8 @@ namespace VolumetricRendering.Clouds
         
         private void SendSettings(Material material)
         {
+            material.SetColor(CloudColor, _cloudColor);
+            
             material.SetTexture(BlueNoiseTex, _blueNoise);
             material.SetFloat(NoiseScale, _noiseScale);
             material.SetFloat(WeatherMapScale, _weatherMapScale);
