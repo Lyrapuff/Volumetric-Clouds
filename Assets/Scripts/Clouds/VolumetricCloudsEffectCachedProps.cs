@@ -4,15 +4,15 @@ namespace VolumetricRendering.Clouds
 {
     public partial class VolumetricCloudsEffect
     {
-        private static readonly int CloudColor = Shader.PropertyToID("CloudColor");
+        private static readonly int CloudTopColor = Shader.PropertyToID("CloudTopColor");
+        private static readonly int CloudBottomColor = Shader.PropertyToID("CloudBottomColor");
         private static readonly int ShapeNoiseTex = Shader.PropertyToID("ShapeNoiseTex");
         private static readonly int DetailNoiseTex = Shader.PropertyToID("DetailNoiseTex");
         private static readonly int WeatherMapTex = Shader.PropertyToID("WeatherMapTex");
         private static readonly int BlueNoiseTex = Shader.PropertyToID("BlueNoiseTex");
+        private static readonly int VolumeParams = Shader.PropertyToID("VolumeParams");
         private static readonly int NoiseScale = Shader.PropertyToID("NoiseScale");
         private static readonly int WeatherMapScale = Shader.PropertyToID("WeatherMapScale");
-        private static readonly int BoundsMin = Shader.PropertyToID("BoundsMin");
-        private static readonly int BoundsMax = Shader.PropertyToID("BoundsMax");
         private static readonly int Density = Shader.PropertyToID("Density");
         private static readonly int Coverage = Shader.PropertyToID("Coverage");
         

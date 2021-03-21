@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
 using Debug = UnityEngine.Debug;
 
 namespace VolumetricRendering.Clouds.Generators
@@ -59,7 +60,7 @@ namespace VolumetricRendering.Clouds.Generators
             RenderTexture texture = CreateTexture();
             _computeShader.SetTexture(kernelIndex, "Result", texture);
             
-            _computeShader.Dispatch(kernelIndex, _size, _size, 1);
+            _computeShader.Dispatch(kernelIndex, _size, _size, _size);
 
             if (_weatherMapTexture != null)
             {
@@ -73,6 +74,7 @@ namespace VolumetricRendering.Clouds.Generators
         {
             RenderTexture texture = new RenderTexture(_size, _size, 0);
             texture.graphicsFormat = GraphicsFormat.R16G16B16A16_UNorm;
+            texture.dimension = TextureDimension.Tex3D;
             texture.volumeDepth = _size;
             texture.enableRandomWrite = true;
             texture.Create();

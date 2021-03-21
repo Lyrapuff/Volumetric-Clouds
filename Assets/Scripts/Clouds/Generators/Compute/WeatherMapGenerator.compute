@@ -11,7 +11,7 @@ Texture2D<float4> LowCoverageTex;
 Texture2D<float4> PeakHeightTex;
 Texture2D<float4> DensityTex;
 
-RWTexture2D<float4> Result;
+RWTexture3D<float4> Result;
 
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
@@ -19,5 +19,5 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float3 pos = float3(id.xyz) / (float)Size;
     float perlin = getPerlin(pos, Persistence, Lacunarity, Octaves, Rep);
     
-    Result[id.xy] = float4(perlin, 0, 0, 0);
+    Result[id.xyz] = float4(perlin, 0, 0, 0);
 }

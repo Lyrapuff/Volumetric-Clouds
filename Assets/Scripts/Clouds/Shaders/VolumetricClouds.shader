@@ -49,24 +49,24 @@
             sampler2D _MainTex;
             sampler2D _CameraDepthTexture;
 
-            float4 CloudColor;
+            float4 CloudTopColor;
+            float4 CloudBottomColor;
             
             Texture3D<float4> ShapeNoiseTex;
             SamplerState samplerShapeNoiseTex;
             Texture3D<float4> DetailNoiseTex;
             SamplerState samplerDetailNoiseTex;
-            Texture2D<float4> WeatherMapTex;
+            Texture3D<float4> WeatherMapTex;
             SamplerState samplerWeatherMapTex;
             Texture2D<float4> BlueNoiseTex;
             SamplerState samplerBlueNoiseTex;
-            
+
+            // x - radius, y - y offset
+            float2 VolumeParams;
             float NoiseScale;
             float WeatherMapScale;
             float Density;
             float Coverage;
-
-            float3 BoundsMin;
-            float3 BoundsMax;
             
             int Steps;
             float ExtinctionFactor;
@@ -97,7 +97,7 @@
             float2 squareUV(float2 uv)
             {
                 float width = _ScreenParams.x;
-                float height =_ScreenParams.y;
+                float height = _ScreenParams.y;
                 //float minDim = min(width, height);
                 float scale = 1000;
                 float x = uv.x * width;
@@ -116,6 +116,11 @@
             {
                 float hgBlend = hg(dotAngle, PhaseParams.x) * 0.5 + hg(dotAngle, -PhaseParams.y) * 0.5;
                 return PhaseParams.z + hgBlend * PhaseParams.w;
+            }
+
+            float beerLaw(float opticalDepth)
+            {
+                return exp(-LightAbsorbtionTowardsSun * opticalDepth);
             }
 
             float intersectSphere(float sr, float3 sc, float3 ro, float3 rd)
@@ -141,8 +146,8 @@
             
             IntersectionInfo tryIntersectVolume(float3 ro, float3 rd)
             {
-                const float s1r = 200000;
-                const float3 s1c = float3(ro.x, -190000, ro.z);
+                const float s1r = VolumeParams.x;
+                const float3 s1c = float3(ro.x, VolumeParams.y, ro.z);
 
                 const float s2r = s1r + ExtinctionFactor;
                 const float3 s2c = s1c;
@@ -164,34 +169,49 @@
 
                 return intersectionInfo;
             }
+
+            float heightFrac(float3 pos, IntersectionInfo intersectionInfo)
+            {
+                return (pos.y - intersectionInfo.dstToVolume) / intersectionInfo.dstInside;
+            }
             
             float sampleDensity (float3 pos)
             {
                 float3 densityPos = pos / NoiseScale;
                 
-                float4 shape = ShapeNoiseTex.SampleLevel(samplerShapeNoiseTex, densityPos / NoiseScale, 0);
+                float4 shape = ShapeNoiseTex.SampleLevel(samplerShapeNoiseTex, densityPos, 0);
                 float density = remap(shape.r, shape.g * 0.625 + shape.b * 0.25 + shape.a * 0.125 - 1, 1, 0 ,1);
 
-                float2 weatherPos = pos.xz;
-                float4 weatherMap = WeatherMapTex.SampleLevel(samplerWeatherMapTex, weatherPos / WeatherMapScale, 0);
+                float3 weatherPos = pos.xyz / WeatherMapScale;
+                float4 weatherMap = WeatherMapTex.SampleLevel(samplerWeatherMapTex, weatherPos, 0);
                 
                 return density * Density * weatherMap.r;
             }
 
-            float computeSunTransmittence(float3 pos)
+            float3 calculateAmbientLighting(float heightFrac)
             {
-                float stepSize = ExtinctionFactor / LightSteps;
+                return lerp(CloudBottomColor.rgb, CloudTopColor.rgb, heightFrac);
+            }
+            
+            float computeTransmittence(float3 pos)
+            {
+                const float LightStepScale = 1;
+                
+                float stepSize = ScatteringFactor * LightStepScale / LightSteps;
+                float3 step = _WorldSpaceLightPos0 * stepSize;
+                
+                pos += 0.5 * step;
 
                 float totalDensity = 0;
 
                 for (int i = 0; i < LightSteps; i++)
                 {
-                    pos += _WorldSpaceLightPos0 * stepSize;
+                    pos += step;
                     
                     totalDensity += max(0, sampleDensity(pos) * stepSize);
                 }
                 
-                return exp(-LightAbsorbtionTowardsSun * totalDensity);
+                return beerLaw(totalDensity);
             }
             
             float4 drawOnScreen(float2 uv)
@@ -273,8 +293,8 @@
                 
                 float dstTraveled = randomOffset;
 
-                float transmittance = 1;
-                float3 lightEnergy = 0;
+                float totalTransmittance = 1;
+                float3 totalLightEnergy = 0;
             
                 while (dstTraveled < intersectionInfo.dstInside)
                 {
@@ -284,13 +304,16 @@
 
                     if (density > 0)
                     {
-                        float transmittanceAtPoint = computeSunTransmittence(currentPos);
+                        float transmittance = computeTransmittence(currentPos);
                         
-                        transmittance *= exp(-density * LightAbsorbtionThroughCloud);
-                        
-                        lightEnergy += density * transmittance * transmittanceAtPoint * phaseVal;
+                        totalTransmittance *= exp(-density * LightAbsorbtionThroughCloud);
 
-                        if (transmittance < 0.01)
+                        //float3 ambientLighting = calculateAmbientLighting( heightFrac(currentPos, intersectionInfo)) / Steps;
+                        float3 ambientLighting = 1;
+                        
+                        totalLightEnergy += density * totalTransmittance * transmittance * phaseVal * ambientLighting;
+
+                        if (totalTransmittance < 0.01)
                         {
                             break;
                         }
@@ -302,11 +325,9 @@
                 float4 backgroundCol = tex2D(_MainTex, i.uv);
 
                 float blending = lerp(0, 1, saturate(1 - dot(rayDir, float3(0, 6, 0))));
-
-                lightEnergy = lightEnergy + CloudColor.xyz * (1 - transmittance) * 2;
             
-                float4 cloudCol = float4(lightEnergy * _LightColor0 * (1 - blending) + backgroundCol * blending * (1 - transmittance), 0);
-                float4 col = backgroundCol * transmittance + cloudCol;
+                float4 cloudCol = float4(totalLightEnergy * _LightColor0 * (1 - blending) + backgroundCol * blending * (1 - totalTransmittance), 0);
+                float4 col = backgroundCol * totalTransmittance + cloudCol;
                 
                 return col;
             }
